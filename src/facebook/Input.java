@@ -1,5 +1,7 @@
 package facebook;
 
+import gui.MainWindow;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -17,21 +19,26 @@ public class Input {
 		fb = new DefaultFacebookClient(accessToken);
 	}
 
-	public static void main(String[] args) {
-		Scanner in = new Scanner(System.in);
-		login(in.nextLine());
-		initialize();
-		gatherData(head, 4);
-		in.close();
-	}
-
 	// generates initial person
 	public static void initialize() {
 		// get my data
 		List<FullData> data = fb
-				.executeFqlQuery("SELECT uid, name, pic_big FROM user WHERE uid = me()", FullData.class);
-		head = new Person(data.get(0).name, data.get(0).uid, "");
+				.executeFqlQuery("SELECT uid, first_name, last_name, pic_big FROM user WHERE uid = me()", FullData.class);
+		head = new Person(data.get(0).first_name, data.get(0).last_name, data.get(0).uid, "");
 		head.setPicture(data.get(0).pic_big);
+		
+		// GET ALL THE DATA HERE
+		head.alpha=0;
+		head.beta=360;
+		head.width=head.height=160;
+		
+
+		Input.head.x = MainWindow.width / 2;
+		Input.head.y = MainWindow.height / 2;
+		Input.head.width = 160;
+		Input.head.height = 160;
+		
+		head.gen2(2,head,head.x, head.y);
 	}
 
 	// helper classes
@@ -51,7 +58,10 @@ public class Input {
 		String uid;
 
 		@Facebook
-		String name;
+		String first_name;
+		
+		@Facebook
+		String last_name;
 
 		@Facebook
 		String pic_big;
@@ -62,7 +72,7 @@ public class Input {
 	 * gets the uid, name, and picture of a person
 	 */
 	public static FullData getFullData(String uid) {
-		return fb.executeFqlQuery("SELECT uid, name, pic_big FROM user WHERE uid = " + uid, FullData.class).get(0);
+		return fb.executeFqlQuery("SELECT uid, first_name, last_name, pic_big FROM user WHERE uid = " + uid, FullData.class).get(0);
 	}
 
 	/**
@@ -71,19 +81,5 @@ public class Input {
 	public static List<RelationshipData> getRelationshipData(String uid) {
 		return fb.executeFqlQuery("SELECT uid, name, relationship FROM family WHERE profile_id = " + uid,
 				RelationshipData.class);
-	}
-
-	// TODO: fill in these methods (use the helper methods)
-	/**
-	 * the data in person is already filled
-	 * add to person's arraylist children such that:
-	 *     the children of person will be one generation greater than person
-	 * repeat this for the number of generations specified
-	 * 
-	 * also, make sure that each "line" in the tree does not contain two of the same person
-	 *     (if you do find a match, then the "deeper" person is obviously deleted)
-	 */
-	public static void gatherData(Person person, int generations) {
-		
 	}
 }

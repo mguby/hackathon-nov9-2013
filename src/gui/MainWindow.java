@@ -1,17 +1,32 @@
 package gui;
 
+import java.awt.Color;
 import java.awt.Frame;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
 import facebook.Input;
+import facebook.Person;
 
-public class MainWindow extends JPanel implements Runnable {
+public class MainWindow extends JPanel implements MouseListener, MouseMotionListener, Runnable {
 	private static final long serialVersionUID = 1L;
 	
 	private static final int SLEEP_TIME = 20;
+	public static final int LINE_LENGTH = 300;
+	
+	public static int width, height;
+	
+	private boolean mousePressed = false;
+	private int mouseX, mouseY;
+	private int tx, ty;
+	private double vx, vy;
 
 	public static void main(String[] args) {
 		JFrame window = new JFrame();
@@ -26,19 +41,116 @@ public class MainWindow extends JPanel implements Runnable {
 		window.setTitle("Family Tree");
 		
 		window.setVisible(true);
+
+		content.width = window.getWidth();
+		content.height = window.getHeight();
+		content.init();
+		
+		window.addMouseListener(content);
+		window.addMouseMotionListener(content);
 	}
 	
 	public MainWindow() {
+	}
+	
+	public void init() {
 		new Thread(this).start();
 		
-		Input.login("CAACEdEose0cBAFozaiyIU3sZCicBej8QqoyPYI0FxokPxkkZB0G0eibNgVHZCqR0ADDT37L6mTIv5g9HcfXoKZAIq6DZAMtXGAOGvmsMaGW4vSJ2khJKxWQFqmv8fesSW6tRu9obYrqr2biyS8h1ZCc6RKzNl4ffeNTZAZCCIf63p98kb9TLa3LlWsqBBjarTRYqOE8pjl8mvgZDZD");
+		Input.login("CAACEdEose0cBAJG66vZCGLjaFYZA8mERCjHu75ytwXOIMNACvDtPpIZCi9ERNRZAybEva1xwq3cmU4VAZAOmPs1iR3Ai5V6q5AlN8xtij4Q10pQ6Qiz57vthlmRoe96jMOiXMxdZAdQiaOYct0DiygwB81riUoLiznYyyJFoFgicJcOAAe5cQABk9ZCjOKI5v8v7Vzkulc1vAZDZD");
 		Input.initialize();
+	}
+	
+	public void update() {
+		if (!mousePressed) {
+			tx += vx;
+			ty += vy;
+
+			if (width > Person.maxX - Person.minX) {
+				int dx1 = Person.minX + tx - 0;
+				int dx2 = width - (Person.maxX + tx);
+				if (dx1 < 0) {
+					tx += (-dx1/2);
+					vx = 0;
+				}
+				else if (dx2 < 0) {
+					tx -= (-dx2/2);
+					vx = 0;
+				}
+			} else {
+				//*
+				
+				// TODO: validate
+				int dx1 = Person.minX + tx - 0;
+				int dx2 = width - (Person.maxX + tx);
+				if (dx1 > 0) {
+					tx += (-dx1/2);
+					vx = 0;
+				}
+				else if (dx2 > 0) {
+					tx -= (-dx2/2);
+					vx = 0;
+				}
+				
+				//*/
+			}
+			
+			if (height > Person.maxY - Person.minY){
+				int dy1 = Person.minY + ty - 0;
+				int dy2 = height - (Person.maxY + ty);
+				if (dy1 < 0) {
+					ty += (-dy1/2);
+					vy = 0;
+				}
+				else if (dy2 < 0) {
+					ty -= (-dy2/2);
+					vy = 0;
+				}
+			} else {
+				int dy1 = Person.minY + ty - 0;
+				int dy2 = height - (Person.maxY + ty);
+				if (dy1 > 0) {
+					ty += (-dy1/2);
+					vy = 0;
+				}
+				else if (dy2 > 0) {
+					ty -= (-dy2/2);
+					vy = 0;
+				}
+				
+			}
+		}
+		
+		if (Input.head != null) {
+			Input.head.mouseMoved(tx, ty, mouseX, mouseY);
+			Input.head.update();
+			Person.minX=Input.head.x-80;
+			Person.minY=Input.head.y-80;
+			Person.maxX=Input.head.x+80;
+			Person.maxY=Input.head.y+80;
+			Input.head.calcBounds();
+		}
+		
+		vx *= .9;
+		vy *= .9;
+		if (Math.abs(vx) < 1)
+			vx = 0;
+		if (Math.abs(vy) < 1)
+			vy = 0;
+		
+		
 	}
 	
 	@Override
 	public void paintComponent(Graphics g) {
-		int W = this.getWidth(), H = this.getHeight();
-		g.drawImage(Input.head.picture, W/2-80, H/2-80, 150, 150, null);
+		((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		g.setColor(new Color(135, 206, 250));
+		g.fillRect(0, 0, width, height);
+		
+		// calculate the dimensions of the entire thing
+		if (Input.head != null) {
+		Input.head.paintLines(g, tx, ty, width, height);
+			Input.head.paint(g, tx, ty, width, height);
+		}
 	}
 	
 	@Override
@@ -48,10 +160,58 @@ public class MainWindow extends JPanel implements Runnable {
 		while (true) {
 			start = System.currentTimeMillis();
 			
+			update();
+			repaint();
+			
 			try {
 				Thread.sleep(Math.max(0, start + SLEEP_TIME - System.currentTimeMillis()));
 			} catch (Exception e) {
 			}
 		}
+	}
+
+	@Override
+	public void mouseDragged(MouseEvent arg0) {
+		int dx = arg0.getX() - mouseX;
+		int dy = arg0.getY() - mouseY;
+		
+		tx += dx;
+		ty += dy;
+		
+		vx = dx;
+		vy = dy;
+		
+		mouseX = arg0.getX();
+		mouseY = arg0.getY();
+	}
+
+	@Override
+	public void mouseMoved(MouseEvent arg0) {
+		mouseX = arg0.getX();
+		mouseY = arg0.getY();
+	}
+
+	@Override
+	public void mouseClicked(MouseEvent arg0) {
+		
+	}
+
+	@Override
+	public void mousePressed(MouseEvent arg0) {
+		mousePressed = true;
+	}
+
+	@Override
+	public void mouseReleased(MouseEvent arg0) {
+		mousePressed = false;
+	}
+	
+	// unused listeners
+	@Override
+	public void mouseEntered(MouseEvent arg0) {
+	}
+
+	@Override
+	public void mouseExited(MouseEvent arg0) {
 	}
 }
