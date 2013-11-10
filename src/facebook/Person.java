@@ -1,10 +1,15 @@
 package facebook;
 
 import java.awt.Color;
+import java.awt.Desktop;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
+import java.awt.geom.Line2D;
 import java.awt.image.BufferedImage;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,8 +28,6 @@ import gui.MainWindow;
 
 // legend
 // exit functionality (button + esc)
-// hover of line = ???
-// threaded
 // 
 
 public class Person implements Comparable<Person>, Runnable {
@@ -81,7 +84,8 @@ public class Person implements Comparable<Person>, Runnable {
 	// runtype = 1
 	int nextGen;
 	
-	public void gen2(int gen, Person parent, final int xx, final int yy) {
+	
+	public void gen2(int gen, int cur, Person parent, final int xx, final int yy) {
 		this.parent=parent;
 		if(gen==0)return;
 		
@@ -151,7 +155,7 @@ public class Person implements Comparable<Person>, Runnable {
 			//p.y = yy + (int) (MainWindow.LINE_LENGTH * Math.cos(Math.toRadians(p.angle)));
 
 		//	int LEN = MainWindow.LINE_LENGTH;
-			int len = MainWindow.LINE_LENGTH * (3-gen);
+			int len = MainWindow.LINE_LENGTH * (1+cur);
 			double rx = len*Math.sin(Math.toRadians(p.angle));
 			double ry =len* Math.cos(Math.toRadians(p.angle));
 			//double r_norm = Math.sqrt(rx*rx+ry*ry);
@@ -184,7 +188,7 @@ public class Person implements Comparable<Person>, Runnable {
 			p.y=yy+dy;
 			//*/
 			
-			p.gen2(gen-1,this,p.x,p.y);
+			p.gen2(gen-1,cur+1,this,p.x,p.y);
 			
 			
 			
@@ -248,6 +252,14 @@ public class Person implements Comparable<Person>, Runnable {
 			++showIdx;
 	}
 	
+	public static final Color[] COLORS = {
+		new Color(251,255,126),
+		new Color(126,255,130),
+		new Color(255,130,126),
+		new Color(130,126,255),
+		new Color(255,126,251)
+	};
+	
 	public void paintLines(Graphics g, int tx, int ty, int w, int h) {
 		int fx = x + tx;
 		int fy = y + ty;
@@ -262,18 +274,23 @@ public class Person implements Comparable<Person>, Runnable {
 			switch (children.get(i).relationship) {
 				case SIBLING:
 					g.setColor(Color.red);
+					g.setColor(COLORS[0]);
 					break;
 				case PARENT_CHILD:
 					g.setColor(Color.white);
+					g.setColor(COLORS[1]);
 					break;
 				case GRANDPARENT_GRANDCHILD:
 					g.setColor(Color.yellow);
+					g.setColor(COLORS[2]);
 					break;
 				case COUSIN:
 					g.setColor(Color.black);
+					g.setColor(COLORS[3]);
 					break;
 				case OTHER:
 					g.setColor(Color.green);
+					g.setColor(COLORS[4]);
 					break;
 			}
 			
@@ -337,17 +354,85 @@ public class Person implements Comparable<Person>, Runnable {
 			children.get(i).paint(g, tx, ty, w, h);
 	}
 	
+	public static void openWebpage(URI uri) {
+	    Desktop desktop = Desktop.isDesktopSupported() ? Desktop.getDesktop() : null;
+	    if (desktop != null && desktop.isSupported(Desktop.Action.BROWSE)) {
+	        try {
+	            desktop.browse(uri);
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	        }
+	    }
+	}
+
+	public static void openWebpage(URL url) {
+	    try {
+	        openWebpage(url.toURI());
+	    } catch (URISyntaxException e) {
+	        e.printStackTrace();
+	    }
+	}
+	
+	
+	
+	public void click(int tx, int ty, int mx, int my)  {
+		int fx = x + tx - width / 2;
+		int fy = y + ty - height / 2;
+
+		if (mx >= fx && mx < fx + width && my >= fy && my < fy + height) {
+			try {
+				openWebpage(new URL("http://www.facebook.com/people/@/"+uid));
+			} catch (MalformedURLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		} else {
+
+			for (int i = 0; i < children.size(); i++)
+				children.get(i).click(tx, ty, mx ,my);
+		}
+	}
+	
+	public boolean line(int tx, int ty, int mx, int my) {
+		return true;
+	
+		/*
+		int fx = mx + tx;
+		int fy = my + ty;
+		
+		if (parent != null) {
+		
+			Line2D.Double l = new Line2D.Double(parent.x, parent.y, x, y);
+			if (!hover && l.ptSegDist(fx, fy) < 10) {
+				
+				hover = true;
+				return true;
+			} else {
+				hover = false;
+			}
+		}
+
+		for (int i = 0; i < children.size(); i++)
+			if (children.get(i).line(tx, ty, mx ,my))
+				return true;
+		
+		return false;
+		//*/
+	}
+	
 	public boolean mouseMoved(int tx, int ty, int mx, int my) {
+		boolean retval = false;
+		
 		int fx = x + tx - width / 2;
 		int fy = y + ty - height / 2;
 		hover = (mx >= fx && mx < fx + width && my >= fy && my < fy + height);
-		if (hover) return true;
+		if (hover) retval = true;
 
 		for (int i = 0; i < children.size(); i++)
 			if (children.get(i).mouseMoved(tx, ty, mx ,my))
-			return true;
+			retval = true;
 		
-		return false;
+		return retval;
 	}
 	
 	public Person(String first, String last, String uid, String relationship) {
