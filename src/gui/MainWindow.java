@@ -56,8 +56,33 @@ public class MainWindow extends JPanel implements MouseListener, MouseMotionList
 
 	public void init() {
 		new Thread(this).start();
-
-		Input.login("CAACEdEose0cBAP6JHZCkUrUqx2iUSNYNsCAgXz3t8t3JE5nK48QQPA3bagwfmrtWyOyEJb9Mp2mRBahEQDi6T55DjtNgDhRcu9l9jocVtT69xutjfCOZB2a8BiAtJegPjaUJZBWTt9lP4nnseSHRsKdVnqd7fjSkd84y7RZBD3ZCYff99TQPWIuyvKwPe9ajlLudwOIjynQZDZD");
+		
+		// HEY
+		// 
+		// 
+		//!!!!!!!!!!!!!!!!!!!!!!
+		///
+		//!!!!!!!!!!!!!!!!!!!!!!
+		// 
+		// REPLACE THE CODE BELOW
+		//
+		/// WITH YOUR OWN ACCESS TOKEN
+		//
+		// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		//
+		//
+		/// !!!!!!!!!!!!!!!!
+		//!!!!!!!!!!!!!!!!!!!!!!
+		// 
+		//
+		//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		//
+		// !!!!!!!!!!!
+		//
+		//!!!!!!!!!!!
+		///
+		//
+		Input.login("CAACEdEose0cBAHwkDu5kXyYtXVKg7tayjkTnFcjbHMHBKkKM9x3JQOdPcvKJ93SveKE5Ou9Gd3lRYw0E6iihW1M6KyfNGUL9cU9SZCgs64PcrbEigU6wum0GaBc7yKIEZAfWaxNy2z4WbYtHZBWnuOxCznYvZBDrLB0QZADVz8LgVXw1ZBZA58rFq1cVegb1MPTXSgJjs541QZDZD");
 		Input.initialize();
 	}
 
@@ -120,6 +145,7 @@ public class MainWindow extends JPanel implements MouseListener, MouseMotionList
 		}
 
 		if (Input.head != null) {
+			Input.head.reset();
 			if (!Input.head.mouseMoved(tx, ty, mouseX, mouseY)) {
 				Input.head.line(tx, ty, mouseX, mouseY);
 			}
@@ -143,7 +169,7 @@ public class MainWindow extends JPanel implements MouseListener, MouseMotionList
 	@Override
 	public void paintComponent(Graphics g) {
 		((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-		g.setColor(new Color(64,128,192));
+		g.setColor(new Color(160,160,160));
 		g.fillRect(0, 0, width, height);
 
 		// calculate the dimensions of the entire thing
@@ -186,6 +212,12 @@ public class MainWindow extends JPanel implements MouseListener, MouseMotionList
 		g.drawString("Aunt/Uncle/Nephew/Niece", xt, y0 + 160);
 		g.translate(0, 8);
 		
+		g.setFont(new Font("Consolas", Font.PLAIN, 32));
+		g.setColor(Color.white);
+		if(hoverx)
+			g.setColor(new Color(128,128,128));
+		g.drawString("X", width-48,48);
+	
 		/*
 		 * 
 	public static final int SIBLING = 0;
@@ -196,6 +228,8 @@ public class MainWindow extends JPanel implements MouseListener, MouseMotionList
 		 */
 	}
 
+	private boolean hoverx=false;
+	
 	@Override
 	public void run() {
 		long start;
@@ -232,12 +266,17 @@ public class MainWindow extends JPanel implements MouseListener, MouseMotionList
 	public void mouseMoved(MouseEvent arg0) {
 		mouseX = arg0.getX();
 		mouseY = arg0.getY();
+		
+		hoverx = (mouseX > width-64 && mouseY < 64);
 	}
 
 	@Override
 	public void mouseClicked(MouseEvent arg0) {
 		if (Input.head != null)
 			Input.head.click(tx, ty, mouseX, mouseY);
+		if (hoverx) {
+			System.exit(0);
+		}
 	}
 
 	@Override
