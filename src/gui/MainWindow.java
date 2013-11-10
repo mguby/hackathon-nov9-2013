@@ -56,18 +56,20 @@ public class MainWindow extends JPanel implements MouseListener, MouseMotionList
 	public void init() {
 		new Thread(this).start();
 		
-		Input.login("CAACEdEose0cBAJG66vZCGLjaFYZA8mERCjHu75ytwXOIMNACvDtPpIZCi9ERNRZAybEva1xwq3cmU4VAZAOmPs1iR3Ai5V6q5AlN8xtij4Q10pQ6Qiz57vthlmRoe96jMOiXMxdZAdQiaOYct0DiygwB81riUoLiznYyyJFoFgicJcOAAe5cQABk9ZCjOKI5v8v7Vzkulc1vAZDZD");
+		Input.login("CAACEdEose0cBAAtTbt1lX6YEcl1kZCNUIuLIIL11pHXZAdRLZBgiecMtZAAm2hFxGy6G0HHq7HppINXtNvFz3XONrOhnnU9gMuurDNmO6Cszo8lXMfLBmvhQ8pwBsSuhOCnD5JT41ERt6B8o6nUC5g4FKFMkTbOElMB2hD6ns1U8zmY9xnP965mqHp24g9lxWIvZBFUKBJgZDZD");
 		Input.initialize();
 	}
 	
 	public void update() {
-		if (!mousePressed) {
+		if (!mousePressed && Input.head != null && Input.head.children != null && Input.head.children.size() > 0) {
 			tx += vx;
 			ty += vy;
+			
+			final int border = 80;
 
-			if (width > Person.maxX - Person.minX) {
-				int dx1 = Person.minX + tx - 0;
-				int dx2 = width - (Person.maxX + tx);
+			if (width - border > Person.maxX - Person.minX) {
+				int dx1 = Person.minX + tx - border;
+				int dx2 = width - border - (Person.maxX + tx);
 				if (dx1 < 0) {
 					tx += (-dx1/2);
 					vx = 0;
@@ -80,8 +82,8 @@ public class MainWindow extends JPanel implements MouseListener, MouseMotionList
 				//*
 				
 				// TODO: validate
-				int dx1 = Person.minX + tx - 0;
-				int dx2 = width - (Person.maxX + tx);
+				int dx1 = Person.minX + tx - border;
+				int dx2 = width - border - (Person.maxX + tx);
 				if (dx1 > 0) {
 					tx += (-dx1/2);
 					vx = 0;
@@ -94,9 +96,9 @@ public class MainWindow extends JPanel implements MouseListener, MouseMotionList
 				//*/
 			}
 			
-			if (height > Person.maxY - Person.minY){
-				int dy1 = Person.minY + ty - 0;
-				int dy2 = height - (Person.maxY + ty);
+			if (height -border> Person.maxY - Person.minY){
+				int dy1 = Person.minY + ty - border;
+				int dy2 = height - border - (Person.maxY + ty);
 				if (dy1 < 0) {
 					ty += (-dy1/2);
 					vy = 0;
@@ -106,8 +108,8 @@ public class MainWindow extends JPanel implements MouseListener, MouseMotionList
 					vy = 0;
 				}
 			} else {
-				int dy1 = Person.minY + ty - 0;
-				int dy2 = height - (Person.maxY + ty);
+				int dy1 = Person.minY + ty - border;
+				int dy2 = height - border - (Person.maxY + ty);
 				if (dy1 > 0) {
 					ty += (-dy1/2);
 					vy = 0;
@@ -121,7 +123,9 @@ public class MainWindow extends JPanel implements MouseListener, MouseMotionList
 		}
 		
 		if (Input.head != null) {
-			Input.head.mouseMoved(tx, ty, mouseX, mouseY);
+			if (!Input.head.mouseMoved(tx, ty, mouseX, mouseY)) {
+				Input.head.line(tx, ty, mouseX, mouseY);
+			}
 			Input.head.update();
 			Person.minX=Input.head.x-80;
 			Person.minY=Input.head.y-80;

@@ -15,36 +15,23 @@ import facebook.Input.FullData;
 import facebook.Input.RelationshipData;
 import gui.MainWindow;
 
+// TODO:
+// hover on line = hover
+// fix 3+ generations
+
+// make it look better (threaded)
+
+// legend
+// exit functionality (button + esc)
+// hover of line = ???
+// threaded
+// 
+
 public class Person implements Comparable<Person>, Runnable {
-	public class Location
-	{
-		private int xLoc;
-		private int yLoc;
-		public Location(int x, int y)
-		{
-			xLoc=x;
-			yLoc=y;
-		}
-		public void add(Location parent)
-		{
-			xLoc += parent.xLoc;
-			yLoc += parent.yLoc;
-		}
-		public Location calcLoc(Location parentLoc, int parentAngle, int totalAngle /*degrees*/,int numInGen, int myId)
-		{
-			int angleBetween = (int) totalAngle/numInGen;
-			int myAngle = (int) (.5*parentAngle + angleBetween * (.5+myId));
-			int myXLoc = (int) (200*Math.PI*Math.sin(Math.toRadians(myAngle)));
-			int myYLoc = (int) (200*Math.PI*Math.cos(Math.toRadians(myAngle)));
-			Location relLoc = new Location(myXLoc, myYLoc);
-			relLoc.add(parentLoc);
-			return relLoc;
-		}
-	}
-	
 	public static int minX, minY, maxX, maxY;
 	
-	private final ArrayList<Person> children = new ArrayList<Person>();
+	public final ArrayList<Person> children = new ArrayList<Person>();
+	public Person parent = null;
 	
 	public static boolean getting = false;
 	
@@ -94,14 +81,43 @@ public class Person implements Comparable<Person>, Runnable {
 	// runtype = 1
 	int nextGen;
 	
-	public void gen2(int gen, Person p2, final int xx, final int yy) {
+	public void gen2(int gen, Person parent, final int xx, final int yy) {
+		this.parent=parent;
 		if(gen==0)return;
 		
-		List<RelationshipData> d = Input.getRelationshipData(uid);
+		List<RelationshipData> d22 = Input.getRelationshipData(uid);
+		ArrayList<RelationshipData> d = new ArrayList<RelationshipData>();
+		d.addAll(d22);
+		
+		// remove extra useless crap
+		List<Person> parents = new ArrayList<Person>();
+		Person pr = parent;
+		while (pr != null) {
+			parents.add(pr);
+			if(pr==Input.head)break;
+			pr=pr.parent;
+		}
+		for (int i = 0; i < d.size(); i++) {
+			boolean rem = false;
+			RelationshipData pp = d.get(i);
+			for (int j = 0; j < parents.size(); j++) {
+				if (parents.get(j).uid.equals(pp.uid)) {
+					rem=true;
+					break;
+				} else {
+					//System.out.println(pp.name + "pp" + " " + pp.uid + " -> " + pp);
+				}
+			}
+			if (rem) {
+				d.remove(i);
+				--i;
+			}
+		}
+		
 		int num = d.size();
 		if (num == 0) return;
-		int delta = (p2.beta - p2.alpha) / num;
-		int theta = p2.alpha;
+		int delta = (beta - alpha) / num;
+		int theta = alpha;
 		
 		for (int i = 0; i < d.size(); i++) {
 			RelationshipData r = d.get(i);
@@ -119,24 +135,58 @@ public class Person implements Comparable<Person>, Runnable {
 			
 			p.alpha = theta;
 			p.beta = theta + delta;
-			p.width = Math.max(60, 7 * p2.width / 10);
-			p.height = Math.max(60,  7 * p2.height / 10);
+			p.width = Math.max(60, 7 * width / 10);
+			p.height = Math.max(60,  7 * height / 10);
 
 			p.angle = (p.alpha+p.beta)/2;
-			if(gen==2){
-				System.out.println((Input.head==p2)+" "+angle+" -- "+xx + ","+yy);
-			} else if (Input.head==p2) {
-				System.out.println("@@@@@@@@@@@@@@@@@@@");
+			//p.angle=p.alpha;
+			if(gen==2){     
+				//System.out.println((Input.head==this)+" "+angle+" -- "+xx + ","+yy);
+			} else if (Input.head==this) {
+				//System.out.println("@@@@@@@@@@@@@@@@@@@");
 			}
-			p.x = xx + (int) (MainWindow.LINE_LENGTH * Math.sin(Math.toRadians(p.angle)));
-			p.y = yy + (int) (MainWindow.LINE_LENGTH * Math.cos(Math.toRadians(p.angle)));
+			
+			
+			//p.x = xx + (int) (MainWindow.LINE_LENGTH * Math.sin(Math.toRadians(p.angle)));
+			//p.y = yy + (int) (MainWindow.LINE_LENGTH * Math.cos(Math.toRadians(p.angle)));
 
+		//	int LEN = MainWindow.LINE_LENGTH;
+			int len = MainWindow.LINE_LENGTH * (3-gen);
+			double rx = len*Math.sin(Math.toRadians(p.angle));
+			double ry =len* Math.cos(Math.toRadians(p.angle));
+			//double r_norm = Math.sqrt(rx*rx+ry*ry);
+			p.x = Input.head.x + (int) rx;
+			p.y = Input.head.y + (int) ry;
 			
-			p.gen2(gen-1,p,p.x,p.y);
+			/*
+			// make the length = 200
+			int dx = p.x-Input.head.x, dy=p.y-Input.head.y;
+			double d_norm_sq = dx*dx+dy*dy;
+			
+			int alpha = angle - p.angle;
+			int beta = 180 - 2 * alpha;
+			
+			double c_norm = Math.sqrt(d_norm_sq + LEN*LEN - 2*Math.sqrt(d_norm_sq)*LEN*Math.cos(Math.toRadians(beta)));
+			double mult = c_norm;
+			rx*=mult;
+			ry*=mult;
+			p.x = Input.head.x + (int) rx;
+			p.y = Input.head.y + (int) ry;
+			
+			//*/
+			
+			/*
+			double dist = Math.sqrt(dx*dx+dy*dy);
+			double mult = MainWindow.LINE_LENGTH/dist;
+			dx*=mult;
+			dy*=mult;
+			p.x=xx+dx;
+			p.y=yy+dy;
+			//*/
+			
+			p.gen2(gen-1,this,p.x,p.y);
 			
 			
-			
-			// TODO: set x y width height etc
 			
 			theta += delta;
 			
@@ -229,6 +279,7 @@ public class Person implements Comparable<Person>, Runnable {
 			
 			g.drawLine(fx, fy, cfx, cfy);
 			
+			
 			children.get(i).paintLines(g, tx, ty, w, h);
 		}
 	}
@@ -286,13 +337,17 @@ public class Person implements Comparable<Person>, Runnable {
 			children.get(i).paint(g, tx, ty, w, h);
 	}
 	
-	public void mouseMoved(int tx, int ty, int mx, int my) {
+	public boolean mouseMoved(int tx, int ty, int mx, int my) {
 		int fx = x + tx - width / 2;
 		int fy = y + ty - height / 2;
 		hover = (mx >= fx && mx < fx + width && my >= fy && my < fy + height);
+		if (hover) return true;
 
 		for (int i = 0; i < children.size(); i++)
-			children.get(i).mouseMoved(tx, ty, mx ,my);
+			if (children.get(i).mouseMoved(tx, ty, mx ,my))
+			return true;
+		
+		return false;
 	}
 	
 	public Person(String first, String last, String uid, String relationship) {

@@ -31,14 +31,13 @@ public class Input {
 		head.alpha=0;
 		head.beta=360;
 		head.width=head.height=160;
-		
 
 		Input.head.x = MainWindow.width / 2;
 		Input.head.y = MainWindow.height / 2;
 		Input.head.width = 160;
 		Input.head.height = 160;
 		
-		head.gen2(2,head,head.x, head.y);
+		head.gen2(2,null,head.x, head.y);
 	}
 
 	// helper classes
